@@ -1,0 +1,106 @@
+---
+title: "Insuficiencia Cardiaca"
+author: "Pablo Palacios Díaz"
+format: 
+  html:
+    lang: es
+    toc: true
+    theme: darkly
+---
+
+# 1 - Introducción
+
+Este informe se centra en el procesamiento de datos, centrándose específicamente en los datos de insuficiencia cardíaca descritos en el artículo de Chicco, D. y Jurman, G., el cual los analiza exhaustivamente.
+
+En este documento de quarto, se emplean diversas funciones del paquete tidyverse, específicamente dplyr, que facilitan la manipulación y estructuración de los datos proporcionados.
+
+# 2 - Carga de paquetes
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(knitr)
+```
+
+# 3 - Carga de datos
+
+```{r}
+fallas_corazon <-
+  read_csv(
+    "https://raw.githubusercontent.com/gf0604-procesamientodatosgeograficos/2024-i/main/datos/bmc/heart_failure_clinical_records_dataset.csv"
+  )
+```
+
+```{r}
+fallas_corazon |>
+  head(n=10)|>
+  kable(format = "html")
+```
+
+# 4 - Consultas
+
+## Consulta 1
+
+Tabla que para los hombres mayores de 70 años, diabéticos y no anémicos muestre, en orden descendente de edad, las columnas correspondientes a:
+
+-   Sexo
+-   Edad
+-   Diabetes
+-   Anemia
+-   Presión arterial
+
+```{r}
+fallas_corazon |>
+    select(Edad = age, Sexo = sex, Diabetes = diabetes, Anemia = anaemia, Presión_arterial = high_blood_pressure)|>
+  filter(Edad > 70 & Anemia == 0 & Diabetes == 1)|>
+  arrange(desc(Edad))|>
+  kable()
+```
+
+## Consulta 2
+
+Tabla que muestre para todas las mujeres con fracción de eyección entre 20 (inclusive) y 25 (inclusive), en orden descendente de fracción de eyección, las columnas correspondientes a:
+
+-   Sexo
+-   Fracción de eyección
+-   Anemia
+-   Diabetes
+
+```{r}
+fallas_corazon |>
+  select(Sexo = sex, Fracción_eyección = ejection_fraction, Anemia = anaemia, Diabetes = diabetes )|>
+  filter(Fracción_eyección >= 20 & Fracción_eyección <= 25)|>
+  arrange(desc(Fracción_eyección))|>
+  kable()
+```
+
+## Consulta 3
+
+Tabla que muestre el promedio de creatinina sérica de pacientes sobrevivientes y de pacientes fallecidos.
+
+```{r}
+fallas_corazon |>
+  select(Fallecido = DEATH_EVENT , Creatinina_Sérica = serum_creatinine)|>
+  group_by(Fallecido) |>
+  summarize(
+    Promedio_Creatinina_Sérica = mean(Creatinina_Sérica, na.rm = TRUE),
+    n = n()
+  )|>
+kable()
+```
+
+## Consulta 4
+
+Tabla que muestre el valor máximo de creatinina sérica de las mujeres que son anémicas o diabéticas.
+
+```{r}
+fallas_corazon |>
+  select(Sexo = sex, Anemia = anaemia, Diabetes = diabetes, Creatinina_Sérica = serum_creatinine)|>
+  filter(Sexo == 0 & Anemia == 1 | Sexo == 0 & Diabetes == 1)|>
+  group_by(Diabetes, Anemia) |>
+  summarize(
+    max_Creatinina_Sérica = max(Creatinina_Sérica, na.rm = TRUE))|>
+kable()
+```
